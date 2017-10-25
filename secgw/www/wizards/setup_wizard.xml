@@ -1,0 +1,786 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<pfsensewizard>
+<copyright>
+/*
+ * setup_wizard.xml
+ *
+ * part of pfSense (https://www.pfsense.org)
+ * Copyright (c) 2004-2016 Rubicon Communications, LLC (Netgate)
+ * All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+</copyright>
+<totalsteps>10</totalsteps>
+<step>
+    <id>1</id>
+	<title>pfSense配置向导</title>
+	<disableheader>true</disableheader>
+	<description>此向导为pfSense的初始配置提供指导。&lt;br/&gt;&lt;br/&gt; 可以通过单击屏幕顶部的徽标图像随时中止配置。</description>
+	<fields>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepbeforeformdisplay>
+		conf_mount_rw();
+		unlink_if_exists('/conf/trigger_initial_wizard');
+		conf_mount_ro();
+	</stepbeforeformdisplay>
+</step>
+<step>
+	<id>2</id>
+	<title>Netgate全球支持</title>
+	<disableheader>true</disableheader>
+	<description>
+    pfSense防火墙因其可靠性，可管理性和灵活性而着称。
+    &lt;br/&gt; &lt;br/&gt;
+    网络安全至关重要，现在比以往任何时候都更加重要。
+    &lt;br/&gt; &lt;br/&gt;
+    Netgate提供24/7/365世界级的支持订阅，涵盖从SOHO到企业的所有需求。
+    &lt;br/&gt; &lt;br/&gt;
+    &lt;a href="https://netgate.com/more-support-info/" target="_blank"&gt;
+    &lt;span class="btn btn-info" "&gt;了解更多 &lt;/button&gt;&lt;/a&gt;
+    &lt;br/&gt; &lt;br/&gt;
+  </description>
+	<fields>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+</step>
+<step>
+	<id>3</id>
+	<title>常规信息</title>
+	<description>在这里设置pfSense使用参数。</description>
+	<fields>
+		<field>
+			<name>Hostname</name>
+			<type>input</type>
+			<bindstofield>wizardtemp->system->hostname</bindstofield>
+			<description>例如: myserver</description>
+			<validate>^[a-zA-Z0-9-]+$</validate>
+			<message>无效的主机名</message>
+		</field>
+		<field>
+			<name>Domain</name>
+			<type>input</type>
+			<bindstofield>wizardtemp->system->domain</bindstofield>
+			<description>例如: mydomain.com</description>
+			<validate>^[a-zA-Z0-9.-]+$</validate>
+			<message>无效的域名</message>
+		</field>
+		<field>
+			<name>DNS解析器行为</name>
+			<type>text</type>
+			<description>DNS解析器的默认行为将忽略为客户端查询手动配置的DNS服务器，并直接查询根DNS服务器。 要使用以下手动配置的DNS服务器进行客户端查询，请在完成向导后，访问系统服务> DNS解析器并启用DNS查询转发。</description>
+		</field>
+		<field>
+			<name>主DNS服务器</name>
+			<type>input</type>
+			<bindstofield>system->dnsserver</bindstofield>
+			<!-- we must unset the fields because this is an array. -->
+			<unsetfield>yes</unsetfield>
+			<arraynum>0</arraynum>
+			<validate>^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$</validate>
+			<message>主DNS服务器设置无效！</message>
+		</field>
+		<field>
+			<name>副DNS服务器</name>
+			<type>input</type>
+			<bindstofield>system->dnsserver</bindstofield>
+			<arraynum>1</arraynum>
+			<validate>^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$</validate>
+			<message>副DNS服务器设置无效！</message>
+		</field>
+		<field>
+			<name>覆盖DNS</name>
+			<description>允许DNS服务器地址由WAN上的DHCP/PPP获取的参数进行覆盖。</description>
+			<type>checkbox</type>
+			<bindstofield>system->dnsallowoverride</bindstofield>
+		</field>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepbeforeformdisplay>
+		<![CDATA[
+		$config['wizardtemp'] = array();
+		$config['wizardtemp']['system'] = array();
+		$config['wizardtemp']['system']['hostname'] = $config['system']['hostname'];
+		$config['wizardtemp']['system']['domain'] = $config['system']['domain'];
+		]]>
+	</stepbeforeformdisplay>
+	<stepsubmitphpaction>
+		<![CDATA[
+		if (empty($_POST['hostname']) || !is_unqualified_hostname($_POST['hostname'])) {
+			include("head.inc");
+			$input_errors[] = "主机名无效。 请在浏览器窗口中返回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+		if (empty($_POST['domain']) || !is_domain($_POST['domain'])) {
+			include("head.inc");
+			$input_errors[] = "域无效。 请在浏览器窗口中返回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+		if (!empty($_POST['primarydnsserver']) && !is_ipaddr($_POST['primarydnsserver'])) {
+			include("head.inc");
+			$input_errors[] = "主DNS服务器无效。 请在浏览器窗口中返回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+		if (!empty($_POST['secondarydnsserver']) && !is_ipaddr($_POST['secondarydnsserver'])) {
+			include("head.inc");
+			$input_errors[] = "副DNS服务器无效。 请在浏览器窗口中返回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+		]]>
+	</stepsubmitphpaction>
+</step>
+<step>
+	<id>4</id>
+	<title>时间服务器设置</title>
+	<description>请选择时区。</description>
+	<fields>
+		<field>
+			<name>时间服务器</name>
+			<description>输入时间服务器的主机名（FQDN）。</description>
+			<type>input</type>
+			<bindstofield>system->timeservers</bindstofield>
+		</field>
+		<field>
+			<name>时区</name>
+			<type>timezone_select</type>
+			<bindstofield>system->timezone</bindstofield>
+		</field>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepsubmitphpaction>
+		<![CDATA[
+		foreach (explode(' ', $_POST['时间服务器']) as $ts) {
+			if (!is_domain($ts)) {
+				$input_errors[] = gettext("NTP时间服务器名称只能包含字符a-z，0-9，' - '和'。'。 条目可以用空格分隔。 请在浏览器窗口中返回并更正。");
+				print_input_errors($input_errors);
+				include("foot.inc");
+				die;
+			}
+		}
+		]]>
+	</stepsubmitphpaction>
+</step>
+<step>
+	<id>5</id>
+	<disableallfieldsbydefault>true</disableallfieldsbydefault>
+	<title>配置WAN接口</title>
+	<description>在这里配置WAN接口参数。</description>
+	<javascriptafterformdisplay>
+		var selectedItem = 0;
+		if (document.forms[0].ipaddress.value == 'dhcp') {
+			selectedItem = 1;
+			document.forms[0].ipaddress.value = '';
+		} else if (document.forms[0].ipaddress.value == 'pppoe') {
+			selectedItem = 2;
+			document.forms[0].ipaddress.value = '';
+		} else if (document.forms[0].ipaddress.value == 'pptp') {
+			selectedItem = 3;
+			document.forms[0].ipaddress.value = '';
+		} else if (document.forms[0].ipaddress.value == 'ppp' || document.forms[0].ipaddress.value == 'l2tp') {
+			document.forms[0].ipaddress.value = '';
+		} else {
+			selectedItem = 0;
+		}
+		document.forms[0].selectedtype.selectedIndex = selectedItem;
+		enableitems(selectedItem);
+
+		events.push(function(){
+			$('#showpppoepassword').click(function(event) {
+				if (this.checked) {
+					$('#pppoepassword').attr('type', 'text');
+				} else {
+					$('#pppoepassword').attr('type', 'password');
+				}
+			});
+
+			$('#showpptppassword').click(function(event) {
+				if (this.checked) {
+					$('#pptppassword').attr('type', 'text');
+				} else {
+					$('#pptppassword').attr('type', 'password');
+				}
+			});
+		});
+
+	</javascriptafterformdisplay>
+	<fields>
+		<field>
+			<name>SelectedType</name>
+			<type>select</type>
+			<donotdisable>true</donotdisable>
+			<options>
+				<option>
+					<name>Static</name>
+					<value>Static</value>
+					<enablefields>ipaddress,subnetmask,上游网关</enablefields>
+				</option>
+				<option>
+					<name>DHCP</name>
+					<value>dhcp</value>
+					<enablefields>DHCP主机名</enablefields>
+				</option>
+				<option>
+					<name>PPPoE</name>
+					<value>pppoe</value>
+					<enablefields>pppoeusername,pppoepassword,pppoeservicename,pppoedialondemand,pppoeidletimeout,showpppoepassword</enablefields>
+				</option>
+				<option>
+					<name>PPTP</name>
+					<value>pptp</value>
+					<enablefields>pptpusername,pptppassword,pptplocalipaddress,pptplocalsubnet,pptpremoteipaddress,pptpdialondemand,pptpidletimeout,showpptppassword
+					</enablefields>
+				</option>
+			</options>
+		</field>
+		<field>
+			<name>常规配置</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<donotdisable>true</donotdisable>
+			<name>MAC地址</name>
+			<bindstofield>interfaces->wan->spoofmac</bindstofield>
+			<type>input</type>
+			<description> 这个字段可以用于修改（“欺骗”）WAN接口的MAC地址。 以xx:xx:xx:xx:xx:xx格式输入MAC地址或留空。</description>
+			<validate>^([0-9a-f]{2}([:-]||$)){6}$</validate>
+			<message>MAC 地址无效</message>
+		</field>
+		<field>
+			<donotdisable>true</donotdisable>
+			<name>MTU</name>
+			<type>input</type>
+			<bindstofield>interfaces->wan->mtu</bindstofield>
+			<description> 设置WAN接口的MTU值。 如果该字段留空，则PPPoE的MTU默认为1492字节，其他连接类型的MTU默认为1500字节。</description>
+		</field>
+		<field>
+			<donotdisable>true</donotdisable>
+			<name>MSS</name>
+			<type>input</type>
+			<bindstofield>interfaces->wan->mss</bindstofield>
+			<description> 如果在此字段中输入值，则TCP连接的MSS钳位值为上面输入的值减40（TCP / IP报头大小）将产生有效力。 如果此字段留空，则PPPoE的MSS默认为1492字节，其他连接类型的MSS默认为1500字节。 在大多数情况下，应该匹配上述MTU值。</description>
+		</field>
+		<field>
+			<name>静态IP地址配置</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<name>IP Address</name>
+			<bindstofield>interfaces->wan->ipaddr</bindstofield>
+			<type>input</type>
+			<typehint> / </typehint>
+			<combinefieldsbegin>true</combinefieldsbegin>
+			<validate>^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$</validate>
+			<message>IP 地址无效</message>
+		</field>
+		<field>
+			<combinefieldsend>true</combinefieldsend>
+			<dontdisplayname>true</dontdisplayname>
+			<dontcombinecells>true</dontcombinecells>
+			<name>Subnet Mask</name>
+			<bindstofield>interfaces->wan->subnet</bindstofield>
+			<type>subnet_select</type>
+		</field>
+		<field>
+			<name>上游网关</name>
+			<bindstofield>wizardtemp->wangateway</bindstofield>
+			<type>input</type>
+			<validate>^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$</validate>
+			<message>网关地址无效</message>
+		</field>
+		<field>
+			<name>DHCP客户端配置</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<name>DHCP主机名</name>
+			<type>input</type>
+			<bindstofield>interfaces->wan->dhcphostname</bindstofield>
+			<description> 当请求DHCP租用时，此字段中的值将作为DHCP客户端标识符和主机名发送。 一些ISP可能需要（用于客户端标识）。</description>
+		</field>
+		<field>
+			<name>PPPoE配置</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<name>PPPoE Username</name>
+			<type>input</type>
+			<bindstofield>wizardtemp->wan->username</bindstofield>
+		</field>
+		<field>
+			<name>PPPoE Password</name>
+			<type>password</type>
+			<bindstofield>wizardtemp->wan->password</bindstofield>
+		</field>
+		<field>
+			<name>Show PPPoE password</name>
+			<type>checkbox</type>
+			<typehint>显示密码字符</typehint>
+		</field>
+		<field>
+			<name>PPPoE Service name</name>
+			<type>input</type>
+			<description>提示：此字段通常可以为空</description>
+			<bindstofield>wizardtemp->wan->provider</bindstofield>
+		</field>
+		<field>
+			<name>PPPoE Dial on demand</name>
+			<typehint>启用按需要拨号</typehint>
+			<type>checkbox</type>
+			<description>此选项使接口工作在按需拨号模式，在有数据连接时才启动拨号连接。</description>
+			<bindstofield>wizardtemp->wan->ondemand</bindstofield>
+		</field>
+		<field>
+			<name>PPPoE Idle timeout</name>
+			<type>input</type>
+			<description>如果在指定的秒数内没有发送限定的出站数据包，则连接断开。 空闲超时为零将禁用此功能。</description>
+			<bindstofield>wizardtemp->wan->idletimeout</bindstofield>
+		</field>
+		<field>
+			<name>PPTP配置</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<name>PPTP Username</name>
+			<type>input</type>
+			<bindstofield>wizardtemp->wan->pptpusername</bindstofield>
+		</field>
+		<field>
+			<name>PPTP Password</name>
+			<type>password</type>
+			<bindstofield>wizardtemp->wan->pptppassword</bindstofield>
+		</field>
+		<field>
+			<name>Show PPTP password</name>
+			<type>checkbox</type>
+			<typehint>显示密码字符</typehint>
+		</field>
+		<field>
+			<combinefieldsbegin>true</combinefieldsbegin>
+			<name>PPTP Local IP Address</name>
+			<type>input</type>
+			<typehint> / </typehint>
+			<bindstofield>wizardtemp->wan->localip</bindstofield>
+			<validate>^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$</validate>
+			<message>PPTP 本地IP地址无效</message>
+		</field>
+		<field>
+			<combinefieldsend>true</combinefieldsend>
+			<dontdisplayname>true</dontdisplayname>
+			<dontcombinecells>true</dontcombinecells>
+			<name>pptplocalsubnet</name>
+			<bindstofield>wizardtemp->wan->subnet</bindstofield>
+			<type>subnet_select</type>
+		</field>
+		<field>
+			<name>PPTP Remote IP Address</name>
+			<bindstofield>wizardtemp->wan->gateway</bindstofield>
+			<type>input</type>
+			<validate>^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$</validate>
+			<message>PPTP 远程IP地址无效</message>
+		</field>
+		<field>
+			<name>PPTP Dial on demand</name>
+			<typehint>启用按需拨号模式</typehint>
+			<type>checkbox</type>
+			<bindstofield>wizardtemp->wan->pptpondemand</bindstofield>
+			<description>此选项使接口工作在按需拨号模式，在有数据连接时才启动拨号连接。</description>
+		</field>
+		<field>
+			<name>PPTP Idle timeout</name>
+			<type>input</type>
+			<bindstofield>wizardtemp->wan->pptpidletimeout</bindstofield>
+			<description>如果在指定的秒数内没有发送限定的出站数据包，则连接断开。 空闲超时为零将禁用此功能。</description>
+		</field>
+		<field>
+			<name>RFC1918 网络</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<donotdisable>true</donotdisable>
+			<name>阻止RFC1918专用网络</name>
+			<description> 设置时，此选项阻止来自根据RFC 1918（10/8，172.16 / 12，192.168 / 16）以及环回地址（127/8）为专用网络保留的IP地址的流量。 此选项通常应保持开启，除非WAN网络也位于此类私有地址空间中。</description>
+			<type>checkbox</type>
+			<bindstofield>interfaces->wan->blockpriv</bindstofield>
+			<typehint>阻止专用网络通过WAN进入</typehint>
+		</field>
+		<field>
+			<name>阻止bogon网络</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<donotdisable>true</donotdisable>
+			<name>阻止bogon网络</name>
+			<description>设置时，此选项阻止来自保留（但不是RFC 1918）或尚未由IANA分配的IP地址的流量。 Bogons是不应出现在Internet路由表中的前缀，并且显然不应该作为接收到的任何数据包中的源地址。</description>
+			<type>checkbox</type>
+			<bindstofield>interfaces->wan->blockbogons</bindstofield>
+			<typehint>阻止非Internet路由网络通过WAN进入</typehint>
+		</field>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepbeforeformdisplay>
+		<![CDATA[
+		if (empty($config['interfaces']['wan']['gateway'])) {
+			$wangw_name = "WANGW";
+		} else {
+			$wangw_name = $config['interfaces']['wan']['gateway'];
+		}
+		if (is_array($config['gateways']['gateway_item']))
+			foreach ($config['gateways']['gateway_item'] as $gw)
+				if ($gw['name'] == $wangw_name || (!empty($config['wizardtemp']['wangateway']) && $gw['gateway'] == $config['wizardtemp']['wangateway']))
+					$config['wizardtemp']['wangateway'] = $gw['gateway'];
+		]]>
+	</stepbeforeformdisplay>
+	<stepsubmitphpaction>
+		<![CDATA[
+		if (!empty($_POST['mtu']) && ($_POST['mtu'] < 576)) {
+			include("head.inc");
+			$input_errors[] = "MTU必须至少为576（根据RFC 791）。 请在浏览器窗口中返回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+		if (!empty($_POST['macaddress']) && !is_macaddr($_POST['macaddress'])) {
+			include("head.inc");
+			$input_errors[] = "MAC地址无效。 请在浏览器窗口中返回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+		if (!empty($_POST['ipaddress']) && ($_POST['selectedtype'] == "Static")) {
+			if (!is_ipaddr($_POST['ipaddress'])) {
+				include("head.inc");
+				$input_errors[] = "WAN IP地址无效。 请在浏览器窗口中返回并更正。";
+				print_input_errors($input_errors);
+				include("foot.inc");
+				die;
+			}
+			if ($_POST['subnetmask'] < 31 &&
+			    ($_POST['ipaddress'] == gen_subnet($_POST['ipaddress'], $_POST['subnetmask']) ||
+			     $_POST['ipaddress'] == gen_subnet_max($_POST['ipaddress'], $_POST['subnetmask']))) {
+			    include("head.inc");
+				$input_errors[] = "WAN IP地址无效。 请在浏览器窗口中返回并更正。";
+				print_input_errors($input_errors);
+				include("foot.inc");
+				die;
+			}
+		}
+		if (!empty($_POST['DHCP主机名']) && !is_hostname($_POST['DHCP主机名'])) {
+			include("head.inc");
+			$input_errors[] = "DHCP主机名无效。 请在浏览器窗口中返回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+		if (!empty($_POST['pptplocalipaddress']) && !is_ipaddr($_POST['pptplocalipaddress'])) {
+		    include("head.inc");
+			$input_errors[] = "PPTP本地IP地址无效。 请在浏览器窗口中返回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+		if (!empty($_POST['pptpremoteipaddress']) && !is_ipaddr($_POST['pptpremoteipaddress'])) {
+			include("head.inc");
+			$input_errors[] = "PPTP远程IP地址无效。 请在浏览器窗口中返回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+		$type = $_POST['selectedtype'];
+
+		if (!is_array($config['ppps']['ppp']))
+			$config['ppps']['ppp'] = array();
+		if (count($config['ppps']['ppp'])) {
+			foreach ($config['ppps']['ppp'] as $pppid => $ppp) {
+				if ($ppp['ptpid'] == "0") {
+					if ((substr($config['interfaces']['wan']['if'],0,5) == "pppoe") || (substr($config['interfaces']['wan']['if'],0,4) == "pptp")) {
+						$oldif = explode(",", $ppp['ports']);
+						$config['interfaces']['wan']['if'] = $oldif[0];
+					}
+					if ($type == "pppoe" || $type == "pptp")
+						unset($config['ppps']['ppp'][$pppid]);
+				}
+			}
+		}
+
+		if ($type == "pppoe" || $type == "pptp") {
+			if ($type == "pptp") {
+				$config['wizardtemp']['wan']['username'] = $config['wizardtemp']['wan']['pptpusername'];
+				$config['wizardtemp']['wan']['password'] = $config['wizardtemp']['wan']['pptppassword'];
+				$config['wizardtemp']['wan']['ondemand'] = $config['wizardtemp']['wan']['pptpondemand'];
+				$config['wizardtemp']['wan']['idletimeout'] = $config['wizardtemp']['wan']['pptpidletimeout'];
+				unset($config['wizardtemp']['wan']['pptpusername']);
+				unset($config['wizardtemp']['wan']['pptppassword']);
+				unset($config['wizardtemp']['wan']['pptpondemand']);
+				unset($config['wizardtemp']['wan']['pptpidletimeout']);
+			}
+			$config['wizardtemp']['wan']['password'] = base64_encode($config['wizardtemp']['wan']['password']);
+			$tmp = array();
+			$tmp['ptpid'] = "0";
+			$tmp['type'] = $type;
+			$tmp['if'] = $type . "0";
+			$tmp['ports'] = $config['interfaces']['wan']['if'];
+			$config['ppps']['ppp'][] = array_merge($tmp, $config['wizardtemp']['wan']);
+			unset($tmp);
+			$config['interfaces']['wan']['if'] = $type."0";
+		}
+		unset($config['wizardtemp']['wan']);
+		]]>
+	</stepsubmitphpaction>
+	<stepsubmitbeforesave>
+		<![CDATA[
+			if ($_POST['selectedtype'] == "Static") {
+
+			} else {
+				$_POST['ipaddress'] = $_POST['selectedtype'];
+				$config['interfaces']['wan']['ipaddr'] = $_POST['selectedtype'];
+				write_config(gettext("WAN interface configuration saved via pfSense setup wizard."));
+			}
+			if (!$config['interfaces']['lan']) {
+				header("Location: /wizard.php?xml=setup_wizard.xml&stepid=6&next=Next");
+			}
+		]]>
+	</stepsubmitbeforesave>
+</step>
+<step>
+	<id>6</id>
+	<title>配置LAN接口</title>
+	<description>在这里配置局域网参数.</description>
+	<fields>
+		<field>
+			<name>LAN IP address</name>
+			<type>input</type>
+			<bindstofield>interfaces->lan->ipaddr</bindstofield>
+			<description>如果此接口使用DHCP获取IP地址，请输入dhcp服务器分配的地址。</description>
+			<validate>^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$</validate>
+			<message>LAN IP 地址无效</message>
+		</field>
+				<field>
+			<name>Subnet Mask</name>
+			<type>subnet_select</type>
+			<bindstofield>interfaces->lan->subnet</bindstofield>
+		</field>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepsubmitphpaction>
+		<![CDATA[
+		if (empty($_POST['lanipaddress']) || !is_ipaddr($_POST['lanipaddress'])) {
+			print_info_box("LAN IP地址无效。 请在浏览器窗口中返回并更正。");
+			die;
+		}
+
+		$lowestip = gen_subnet($_POST['lanipaddress'], $_POST['subnetmask']);
+		$highestip = gen_subnet_max($_POST['lanipaddress'], $_POST['subnetmask']);
+
+		if ($_POST['subnetmask'] < 31) {
+			if ($_POST['lanipaddress'] == $lowestip) {
+				include("head.inc");
+				$input_errors[] = "LAN IP地址等于子网网络地址。 这是不允许的。 请在浏览器窗口中返回并更正。";
+				print_input_errors($input_errors);
+				include("foot.inc");
+				die;
+			}
+			if ($_POST['lanipaddress'] == $highestip) {
+				include("head.inc");
+				$input_errors[] = "LAN IP地址等于子网广播地址。 这是不允许的。 请在浏览器窗口中返回并更正。";
+				print_input_errors($input_errors);
+				include("foot.inc");
+				die;
+			}
+		} else {
+			include("head.inc");
+			$input_errors[] = "子网掩码无效，请选择小于31的掩码。请在浏览器窗口中按回并更正。";
+			print_input_errors($input_errors);
+			include("foot.inc");
+			die;
+		}
+
+		/*
+		   If the existing DHCP range on LAN is not in the new subnet or
+		   is invalid, then replace the range with a newly crafted one.
+		*/
+		if (!ip_in_subnet($config['dhcpd']['lan']['range']['from'], "{$_POST['lanipaddress']}/{$_POST['subnetmask']}") ||
+		    !ip_in_subnet($config['dhcpd']['lan']['range']['to'], "{$_POST['lanipaddress']}/{$_POST['subnetmask']}")) {
+
+			$ipaddresses_before = ip_range_size_v4($lowestip, $_POST['lanipaddress']);
+			$ipaddresses_after = ip_range_size_v4($_POST['lanipaddress'], $highestip);
+			if ($ipaddresses_after >= $ipaddresses_before) {
+			// LAN IP 地址位于子网的上半部分，因此在下半部分放置DHCP。
+			if ($ipaddresses_after > 30) {
+				// 在子网中有合理的空间，使用较小的空间用于DHCP
+				// 如果用户指定了“.1”地址，这种情况将像旧的默认值一样工作。
+				// 范围将类似“.10”到“.245”
+				$config['dhcpd']['lan']['range']['from'] = ip_after($_POST['lanipaddress'], 9);
+				$config['dhcpd']['lan']['range']['to'] = ip_before($highestip, 10);
+			} else {
+				// 子网中没有太多空间，因此将LAN IP上方的所有内容分配给DHCP。
+				$config['dhcpd']['lan']['range']['from'] = ip_after($_POST['lanipaddress']);
+				$config['dhcpd']['lan']['range']['to'] = ip_before($highestip);
+			}
+		} else {
+			// LAN IP位于子网的下半部分，因此将DHCP放在上半部分。
+			if ($ipaddresses_before > 30) {
+				// 在子网中有合理的空间，使用较小的空间用于DHCP
+				$config['dhcpd']['lan']['range']['from'] = ip_after($lowestip, 10);
+				$config['dhcpd']['lan']['range']['to'] = ip_before($_POST['lanipaddress'], 9);
+			} else {
+				// 子网中没有太多空间，因此将LAN IP下面的所有内容分配给DHCP。
+				$config['dhcpd']['lan']['range']['from'] = ip_after($lowestip);
+				$config['dhcpd']['lan']['range']['to'] = ip_before($_POST['lanipaddress']);
+				}
+			}
+		}
+		]]>
+	</stepsubmitphpaction>
+</step>
+<step>
+	<id>7</id>
+	<title>设置管理员密码</title>
+	<description>在这里设置管理员密码，用于访问WebGUI以及SSH服务（如果启用）。</description>
+	<fields>
+		<field>
+			<name>管理员密码</name>
+			<type>password</type>
+		</field>
+		<field>
+			<name>再输入一遍</name>
+			<type>password</type>
+		</field>
+		<field>
+			<name>Next</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepsubmitphpaction>
+	<![CDATA[
+	if ($_POST['管理员密码'] != "") {
+		if ($_POST['管理员密码'] == $_POST['再输入一遍']) {
+			$admin_user =& getUserEntryByUID(0);
+			local_user_set_password($admin_user, $_POST['管理员密码']);
+			local_user_set($admin_user);
+			write_config();
+		} else {
+			print_info_box("密码不匹配！ 请在浏览器窗口中返回并更正。");
+			die;
+		}
+	}
+	]]>
+	</stepsubmitphpaction>
+</step>
+<step>
+	<id>8</id>
+	<title>重新加载配置</title>
+	<disableheader>true</disableheader>
+	<description>单击“重新加载”将使用新的配置重新加载pfSense防火墙。</description>
+	<fields>
+		<field>
+			<name>重新加载</name>
+			<type>submit</type>
+		</field>
+	</fields>
+</step>
+<step>
+	<id>9</id>
+	<title>正在重新载入.....</title>
+	<description>
+		正在进行中，请稍候..... &lt;p&gt;
+		&lt;meta http-equiv="refresh" content="5; url=wizard.php?xml=setup_wizard.xml&amp;stepid=9" &gt;
+		&lt;p&gt;
+		加载完成后，向导将重定向到下一步。
+	</description>
+	<stepafterformdisplay>
+		<![CDATA[
+		$config['system']['hostname'] = $config['wizardtemp']['system']['hostname'];
+		$config['system']['domain'] = $config['wizardtemp']['system']['domain'];
+		if (!empty($config['wizardtemp']['wangateway'])) {
+			if (!is_array($config['gateways']['gateway_item']))
+				$config['gateways']['gateway_item'] = array();
+			$found = false;
+			$defaultgw_found = false;
+			foreach ($config['gateways']['gateway_item'] as & $gw) {
+				if ($gw['interface'] != "wan")
+					continue;
+				if (isset($gw['defaultgw']))
+					$defaultgw_found = true;
+				if ($gw['name'] == 'WANGW' || (!empty($config['wizardtemp']['wangateway']) && $gw['gateway'] == $config['wizardtemp']['wangateway'])) {
+					$found = true;
+					$gw['gateway'] = $config['wizardtemp']['wangateway'];
+					$config['interfaces']['wan']['gateway'] = $gw['name'];
+				}
+			}
+			if (!$found) {
+				$newgw = array();
+				$newgw['interface'] = "wan";
+				$newgw['gateway'] = $config['wizardtemp']['wangateway'];
+				$newgw['name'] = "WANGW";
+				$newgw['weight'] = 1;
+				$newgw['descr'] = "WAN Gateway";
+				$newgw['defaultgw'] = !$defaultgw_found;
+				$config['gateways']['gateway_item'][] = $newgw;
+				$config['interfaces']['wan']['gateway'] = "WANGW";
+			}
+		}
+		unset($config['wizardtemp']);
+		write_config(gettext("完成pfSense设置向导时配置保存。"));
+		reload_all();
+		mwexec_bg("/etc/rc.update_bogons.sh now");
+		]]>
+	</stepafterformdisplay>
+</step>
+<step>
+	<id>10</id>
+	<title>向导完成。</title>
+	<stepbeforeformdisplay>
+	<![CDATA[
+		if ($g['product_name'] <> 'pfSense') {
+			header("Location: " . fixup_string("\$myurl"));
+			exit;
+		}
+	]]>
+	</stepbeforeformdisplay>
+	<description>
+	<![CDATA[
+		恭喜！ pfSense防火墙已经配置完成。<p>
+		进入System（系统） →GeneralSetup（常规设置）→Localization（本地化）→Language（语言），选择Chinese (Simplified，China) ，点击保存切换到中文界面！</p><p>
+		点击<a target='_blank' href='https://www.netgate.com/more-support-info/'>这里</a>了解Netgate 24/7/365支持。</p><p>
+		点击<a href='$myurl'>这里</a>返回pfSense系统面板。</p>
+	]]>
+	</description>
+</step>
+</pfsensewizard>

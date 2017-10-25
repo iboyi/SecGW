@@ -1,0 +1,1049 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<pfsensewizard>
+<copyright>
+/*
+ * openvpn_wizard.xml
+ *
+ * part of pfSense (https://www.pfsense.org)
+ * Copyright (c) 2004-2016 Electric Sheep Fencing, LLC
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgment:
+ *    "This product includes software developed by the pfSense Project
+ *    for use in the pfSense® software distribution. (http://www.pfsense.org/).
+ *
+ * 4. The names "pfSense" and "pfSense Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    coreteam@pfsense.org.
+ *
+ * 5. Products derived from this software may not be called "pfSense"
+ *    nor may "pfSense" appear in their names without prior written
+ *    permission of the Electric Sheep Fencing, LLC.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *
+ * "This product includes software developed by the pfSense Project
+ * for use in the pfSense software distribution (http://www.pfsense.org/).
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE pfSense PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE pfSense PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+</copyright>
+<totalsteps>12</totalsteps>
+<step>
+	<id>1</id>
+	<title>OpenVPN 远程访问服务器设置</title>
+	<description>此向导将通过OpenVPN远程访问服务器设置提供指导 .&lt;br/&gt;&lt;br/&gt; 可以通过单击屏幕顶部的徽标图像随时停止向导。</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<type>listtopic</type>
+			<name>选择验证后端类型</name>
+		</field>
+		<field>
+			<type>select</type>
+			<displayname>服务类型</displayname>
+			<name>authtype</name>
+			<description>&lt;br/&gt;&lt;b&gt;注意：&lt;/b&gt; 如果不确定，请将此设置为“Local User Access”。</description>
+			<bindstofield>ovpnserver->step1->type</bindstofield>
+			<options>
+				<option>
+					<name>Local User Access</name>
+					<value>local</value>
+				</option>
+				<option>
+					<name>LDAP</name>
+					<value>ldap</value>
+				</option>
+				<option>
+					<name>RADIUS</name>
+					<value>radius</value>
+				</option>
+			</options>
+		</field>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepsubmitphpaction>step1_submitphpaction();</stepsubmitphpaction>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+<step>
+	<id>2</id>
+	<title>LDAP Server Selection</title>
+	<description>OpenVPN远程访问服务器设置向导</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<type>listtopic</type>
+			<name>LDAP Authentication Server List</name>
+		</field>
+		<field>
+			<name>authserv</name>
+			<displayname>LDAP servers</displayname>
+			<type>select</type>
+			<bindstofield>ovpnserver->step2->authserv</bindstofield>
+			<options>
+				<option>
+					<name>dummy</name>
+					<value>dummy</value>
+				</option>
+			</options>
+		</field>
+		<field>
+			<type>submit</type>
+			<name>Add new LDAP server</name>
+		</field>
+		<field>
+			<type>submit</type>
+			<name>Next</name>
+		</field>
+	</fields>
+	<stepbeforeformdisplay>step2_stepbeforeformdisplay();</stepbeforeformdisplay>
+	<stepsubmitphpaction>step2_submitphpaction();</stepsubmitphpaction>
+	<javascriptafterformdisplay>enablechange();</javascriptafterformdisplay>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+<step>
+	<id>3</id>
+	<title>Add LDAP Server</title>
+	<description>OpenVPN Remote Access Server Setup Wizard</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<type>listtopic</type>
+			<name>LDAP Authentication Server Parameters</name>
+		</field>
+		<field>
+			<name>name</name>
+			<displayname>Name</displayname>
+			<type>input</type>
+			<bindstofield>ovpnserver->step2->authtype</bindstofield>
+			<size>30</size>
+			<description>Descriptive server name, for administrative reference.</description>
+		</field>
+		<field>
+			<name>ip</name>
+			<displayname>Hostname or IP address</displayname>
+			<type>input</type>
+			<bindstofield>ovpnserver->step2->ip</bindstofield>
+			<description>Address of the LDAP server.</description>
+		</field>
+		<field>
+			<name>port</name>
+			<displayname>Port</displayname>
+			<type>input</type>
+			<size>8</size>
+			<bindstofield>ovpnserver->step2->port</bindstofield>
+			<description>LDAP Server port, leave blank for the default (389 for TCP, 636 for SSL).</description>
+		</field>
+		<field>
+			<name>transport</name>
+			<displayname>Transport</displayname>
+			<type>select</type>
+			<bindstofield>ovpnserver->step2->transport</bindstofield>
+			<options>
+				<option>
+					<name>TCP - Standard</name>
+					<value>tcp</value>
+				</option>
+				<option>
+					<name>SSL - Encrypted</name>
+					<value>ssl</value>
+				</option>
+			</options>
+			<description>&lt;br/&gt;The protocol used by the LDAP server. It can either be standard TCP or SSL encrypted.</description>
+		</field>
+		<field>
+			<name>scope</name>
+			<displayname>Search Scope Level</displayname>
+			<type>select</type>
+			<options>
+				<option>
+					<name>One Level</name>
+					<value>one</value>
+				</option>
+				<option>
+					<name>Entire Subtree</name>
+					<value>subtree</value>
+				</option>
+			</options>
+			<bindstofield>ovpnserver->step2->scope</bindstofield>
+		</field>
+		<field>
+			<name>basedn</name>
+			<displayname>Search Scope Base DN</displayname>
+			<type>input</type>
+			<size>40</size>
+			<bindstofield>ovpnserver->step2->basedn</bindstofield>
+		</field>
+		<field>
+			<name>authscope</name>
+			<displayname>Authentication Containers</displayname>
+			<type>input</type>
+			<size>40</size>
+			<bindstofield>ovpnserver->step2->authscope</bindstofield>
+			<description>Semi-Colon separated. This will be prepended to the search base dn above or full container path can be specified.&lt;br/&gt;EXAMPLE: CN=Users;DC=example&lt;br/&gt;EXAMPLE: CN=Users,DC=example,DC=com;OU=OtherUsers,DC=example,DC=com </description>
+		</field>
+		<field>
+			<name>userdn</name>
+			<displayname>LDAP Bind User DN</displayname>
+			<type>input</type>
+			<size>20</size>
+			<description>If left blank, an anonymous bind will be done.</description>
+			<bindstofield>ovpnserver->step2->userdn</bindstofield>
+		</field>
+		<field>
+			<name>passdn</name>
+			<displayname>LDAP Bind Password</displayname>
+			<type>password</type>
+			<size>20</size>
+			<bindstofield>ovpnserver->step2->passdn</bindstofield>
+			<description>If a user DN was supplied above, this password will also be used when performing a bind operation.</description>
+		</field>
+		<field>
+			<name>nameattr</name>
+			<displayname>User Naming Attribute</displayname>
+			<type>input</type>
+			<bindstofield>ovpnserver->step2->nameattr</bindstofield>
+			<description>Typically "cn" (OpenLDAP, Novell eDirectory), "samAccountName" (Microsoft AD)</description>
+		</field>
+		<field>
+			<name>groupattr</name>
+			<displayname>Group Naming Attribute</displayname>
+			<type>input</type>
+			<bindstofield>ovpnserver->step2->groupattr</bindstofield>
+			<description>Typically "cn" (OpenLDAP, Microsoft AD, and Novell eDirectory)</description>
+		</field>
+		<field>
+			<name>memberattr</name>
+			<displayname>Member Naming Attribute</displayname>
+			<type>input</type>
+			<bindstofield>ovpnserver->step2->memberattr</bindstofield>
+			<description>Typically "member" (OpenLDAP), "memberOf" (Microsoft AD), "uniqueMember" (Novell eDirectory)</description>
+		</field>
+		<field>
+			<type>submit</type>
+			<name>Add new Server</name>
+		</field>
+	</fields>
+	<stepsubmitphpaction>step3_submitphpaction();</stepsubmitphpaction>
+	<javascriptafterformdisplay>enablechange();</javascriptafterformdisplay>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+<step>
+	<id>4</id>
+	<title>RADIUS Server Selection</title>
+	<description>OpenVPN Remote Access Server Setup Wizard</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<type>listtopic</type>
+			<name>RADIUS Authentication Server List</name>
+		</field>
+		<field>
+			<name>authserv</name>
+			<displayname>RADIUS servers</displayname>
+			<type>select</type>
+			<bindstofield>ovpnserver->step2->authserv</bindstofield>
+			<options>
+				<option>
+					<name>dummy</name>
+					<value>dummy</value>
+				</option>
+			</options>
+		</field>
+		<field>
+			<type>submit</type>
+			<name>Add new RADIUS server</name>
+		</field>
+		<field>
+			<type>submit</type>
+			<name>Next</name>
+		</field>
+	</fields>
+	<stepbeforeformdisplay>step4_stepbeforeformdisplay();</stepbeforeformdisplay>
+	<stepsubmitphpaction>step4_submitphpaction();</stepsubmitphpaction>
+	<javascriptafterformdisplay>enablechange();</javascriptafterformdisplay>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+<step>
+	<id>5</id>
+	<title>Add RADIUS Server</title>
+	<description>OpenVPN Remote Access Server Setup Wizard</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<type>listtopic</type>
+			<name>RADIUS Authentication Server Parameters</name>
+		</field>
+		<field>
+			<name>name</name>
+			<displayname>Name</displayname>
+			<type>input</type>
+			<bindstofield>ovpnserver->step2->authtype</bindstofield>
+			<size>20</size>
+			<description>Descriptive name for the RADIUS server, for administrative reference.</description>
+		</field>
+		<field>
+			<name>ip</name>
+			<displayname>Hostname or IP address</displayname>
+			<type>input</type>
+			<bindstofield>ovpnserver->step2->ip</bindstofield>
+			<description>Address of the RADIUS server.</description>
+		</field>
+		<field>
+			<name>port</name>
+			<displayname>Authentication Port</displayname>
+			<type>input</type>
+			<size>8</size>
+			<bindstofield>ovpnserver->step2->port</bindstofield>
+			<description>Port used by the RADIUS server for accepting Authentication requests, typically 1812.</description>
+		</field>
+		<field>
+			<name>secret</name>
+			<displayname>Shared Secret</displayname>
+			<type>password</type>
+			<size>20</size>
+			<bindstofield>ovpnserver->step2->password</bindstofield>
+			<description></description>
+		</field>
+		<field>
+			<name>Add new Server</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepsubmitphpaction>step5_submitphpaction();</stepsubmitphpaction>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+<step>
+	<id>6</id>
+	<title>证书颁发机构选择</title>
+	<description>OpenVPN远程访问服务器设置向导</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<name>选择证书颁发机构（CA）</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<type>certca_selection</type>
+			<name>certca</name>
+			<displayname>Certificate Authority</displayname>
+			<bindstofield>ovpnserver->step6->authcertca</bindstofield>
+		</field>
+		<field>
+			<type>submit</type>
+			<name>添加新的证书颁发机构</name>
+		</field>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepbeforeformdisplay>step6_stepbeforeformdisplay();</stepbeforeformdisplay>
+	<stepsubmitphpaction>step6_submitphpaction();</stepsubmitphpaction>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+<step>
+	<id>7</id>
+	<title>添加证书颁发机构</title>
+	<description>OpenVPN远程访问服务器设置向导</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<name>创建新的证书颁发机构（CA）证书</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<name>descr</name>
+			<displayname>Descriptive name</displayname>
+			<description>用于标识此证书的管理参考的名称。 这与其他证书的common-name字段相同。</description>
+			<type>input</type>
+			<size>20</size>
+			<bindstofield>ovpnserver->step6->certca</bindstofield>
+		</field>
+		<field>
+			<name>keylength</name>
+			<displayname>Key length</displayname>
+			<description>&lt;br/&gt;生成的键的大小。 密钥越大，其提供的安全性越高，但是更大的密钥需要更多的时间来生成，并且需要稍长的时间来验证，导致设置新会话（不总是明显）的轻微放慢。 截至2016年，2048位是最小和最常见的选择，4096是最常见的使用。 有关详细信息，请参阅 &lt;a href="https://keylength.com"&gt;keylength.com&lt;/a&gt;</description>
+			<type>select</type>
+			<value>2048</value>
+			<bindstofield>ovpnserver->step6->keylength</bindstofield>
+			<options>
+				<option>
+					<name>512 bit</name>
+					<value>512</value>
+				</option>
+				<option>
+					<name>1024 bit</name>
+					<value>1024</value>
+				</option>
+				<option>
+					<name>2048 bit</name>
+					<value>2048</value>
+				</option>
+				<option>
+					<name>3072 bit</name>
+					<value>3072</value>
+				</option>
+				<option>
+					<name>4096 bit</name>
+					<value>4096</value>
+				</option>
+				<option>
+					<name>7680 bit</name>
+					<value>7680</value>
+				</option>
+				<option>
+					<name>8192 bit</name>
+					<value>8192</value>
+				</option>
+				<option>
+					<name>15360 bit</name>
+					<value>15360</value>
+				</option>
+				<option>
+					<name>16384 bit</name>
+					<value>16384</value>
+				</option>
+			</options>
+		</field>
+		<field>
+			<name>lifetime</name>
+			<displayname>Lifetime</displayname>
+			<type>input</type>
+			<size>10</size>
+			<value>3650</value>
+			<description>寿命（天）。 这通常设置为3650天（10年）。</description>
+			<bindstofield>ovpnserver->step6->lifetime</bindstofield>
+		</field>
+		<field>
+			<name>country</name>
+			<displayname>国家代码</displayname>
+			<description>两个字母的ISO国家/地区代码（例如US，AU，CA）。 </description>
+			<type>input</type>
+			<size>5</size>
+			<bindstofield>ovpnserver->step6->country</bindstofield>
+		</field>
+		<field>
+			<name>state</name>
+			<displayname>州或省</displayname>
+			<description>完整州或省名称，不缩写（例如肯塔基州，印第安纳州，安大略省）。</description>
+			<type>input</type>
+			<size>30</size>
+			<bindstofield>ovpnserver->step6->state</bindstofield>
+		</field>
+		<field>
+			<name>city</name>
+			<displayname>城市</displayname>
+			<description>城市或其他地区名称（例如路易斯维尔，印第安纳波利斯，多伦多）。</description>
+			<type>input</type>
+			<size>30</size>
+			<bindstofield>ovpnserver->step6->city</bindstofield>
+		</field>
+		<field>
+			<name>organization</name>
+			<displayname>组织</displayname>
+			<description>组织名称，通常是公司或组名称。</description>
+			<type>input</type>
+			<size>30</size>
+			<bindstofield>ovpnserver->step6->organization</bindstofield>
+		</field>
+		<field>
+			<name>email</name>
+			<displayname>E-mail</displayname>
+			<description>证书联系人的E-mail。 通常是生成证书的人的E-mail。</description>
+			<type>input</type>
+			<size>30</size>
+			<bindstofield>ovpnserver->step6->email</bindstofield>
+		</field>
+		<field>
+			<name>添加新的证书颁发机构</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepsubmitphpaction>step7_submitphpaction();</stepsubmitphpaction>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+	<javascriptafterformdisplay>enablechange();</javascriptafterformdisplay>
+</step>
+<step>
+	<id>8</id>
+	<title>选择服务器证书</title>
+	<description>OpenVPN远程访问服务器设置向导</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<name>选择服务器证书</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<type>cert_selection</type>
+			<name>certname</name>
+			<displayname>Certificate</displayname>
+			<bindstofield>ovpnserver->step9->authcertname</bindstofield>
+		</field>
+		<field>
+			<type>submit</type>
+			<name>添加新证书</name>
+		</field>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepbeforeformdisplay>step8_stepbeforeformdisplay();</stepbeforeformdisplay>
+	<stepsubmitphpaction>step8_submitphpaction();</stepsubmitphpaction>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+<step>
+	<id>9</id>
+	<title>添加服务器证书</title>
+	<description>OpenVPN远程访问服务器设置向导</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<name>创建新的服务器证书</name>
+			<type>listtopic</type>
+		</field>
+		<field>
+			<name>descr</name>
+			<displayname>Descriptive name</displayname>
+			<description>用于标识此证书的管理参考的名称。 这也称为证书的“公用名称”。</description>
+			<type>input</type>
+			<size>20</size>
+			<bindstofield>ovpnserver->step9->certname</bindstofield>
+		</field>
+		<field>
+			<name>keylength</name>
+			<displayname>Key length</displayname>
+			<description>&lt;br/&gt;将生成的秘钥的大小。 密钥越大，它提供的安全性越高，但是更大的密钥通常使用起来更慢。</description>
+			<type>select</type>
+			<value>2048</value>
+			<bindstofield>ovpnserver->step9->keylength</bindstofield>
+			<options>
+				<option>
+					<name>512 bits</name>
+					<value>512</value>
+				</option>
+				<option>
+					<name>1024 bits</name>
+					<value>1024</value>
+				</option>
+				<option>
+					<name>2048 bits</name>
+					<value>2048</value>
+				</option>
+				<option>
+					<name>4096 bits</name>
+					<value>4096</value>
+				</option>
+			</options>
+		</field>
+		<field>
+			<name>lifetime</name>
+			<displayname>Lifetime</displayname>
+			<description>寿命（天）。 这通常设置为3650（10年）。</description>
+			<type>input</type>
+			<size>10</size>
+			<value>3650</value>
+			<bindstofield>ovpnserver->step9->lifetime</bindstofield>
+		</field>
+		<field>
+			<name>country</name>
+			<displayname>国家代码</displayname>
+			<description>两个字母的ISO国家/地区代码（例如US，AU，CA） </description>
+			<type>input</type>
+			<size>5</size>
+			<bindstofield>ovpnserver->step9->country</bindstofield>
+		</field>
+		<field>
+			<name>state</name>
+			<displayname>州或省</displayname>
+			<description>完整州名称，不缩写（例如肯塔基州，印第安纳州，安大略省）。</description>
+			<type>input</type>
+			<size>30</size>
+			<bindstofield>ovpnserver->step9->state</bindstofield>
+		</field>
+		<field>
+			<name>city</name>
+			<displayname>城市</displayname>
+			<description>城市或其他地区名称（例如路易斯维尔，印第安纳波利斯，多伦多）。</description>
+			<type>input</type>
+			<size>30</size>
+			<bindstofield>ovpnserver->step9->city</bindstofield>
+		</field>
+		<field>
+			<name>organization</name>
+			<displayname>组织</displayname>
+			<description>组织名称，通常是公司或组名称。</description>
+			<type>input</type>
+			<size>30</size>
+			<bindstofield>ovpnserver->step9->organization</bindstofield>
+		</field>
+		<field>
+			<name>email</name>
+			<displayname>E-mail</displayname>
+			<description>证书联系人的电子邮件地址。 通常是生成证书的人的电子邮件。</description>
+			<type>input</type>
+			<size>30</size>
+			<bindstofield>ovpnserver->step9->email</bindstofield>
+		</field>
+		<field>
+			<name>创建新证书</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepbeforeformdisplay>step9_stepbeforeformdisplay();</stepbeforeformdisplay>
+	<stepsubmitphpaction>step9_submitphpaction();</stepsubmitphpaction>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+<step>
+	<id>10</id>
+	<title>服务器设置</title>
+	<description>OpenVPN远程访问服务器设置向导</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<type>listtopic</type>
+			<name>OpenVPN服务器常规配置</name>
+		</field>
+		<field>
+			<name>interface</name>
+			<type>interfaces_selection</type>
+			<description>OpenVPN将侦听传入连接（通常为WAN）的接口。</description>
+			<displayname>Interface</displayname>
+			<bindstofield>ovpnserver->step10->interface</bindstofield>
+		</field>
+		<field>
+			<name>Protocol</name>
+			<type>select</type>
+			<bindstofield>ovpnserver->step10->protocol</bindstofield>
+			<options>
+				<option>
+					<name>UDP</name>
+					<value>UDP</value>
+				</option>
+				<option>
+					<name>TCP</name>
+					<value>TCP</value>
+				</option>
+			</options>
+			<description>&lt;br/&gt;用于OpenVPN连接的协议。 如果不确定，请将此设置为UDP。</description>
+		</field>
+		<field>
+			<name>Local Port</name>
+			<displayname>本地端口</displayname>
+			<description>OpenVPN将在其上侦听连接的本地端口。 默认端口为1194。这可以保留默认端口，除非需要使用不同的端口。</description>
+			<type>input</type>
+			<size>10</size>
+			<bindstofield>ovpnserver->step10->localport</bindstofield>
+		</field>
+		<field>
+			<name>description</name>
+			<displayname>Description</displayname>
+			<description>此OpenVPN实例的名称，用于管理引用。 它也被OpenVPN客户端导出用于在客户端上识别此VPN。</description>
+			<type>input</type>
+			<size>30</size>
+			<bindstofield>ovpnserver->step10->descr</bindstofield>
+		</field>
+		<field>
+			<type>listtopic</type>
+			<name>Cryptographic Settings</name>
+		</field>
+		<field>
+			<name>TLS认证</name>
+			<type>checkbox</type>
+			<value>on</value>
+			<description>启用TLS数据包的认证。</description>
+			<bindstofield>ovpnserver->step10->tlsauth</bindstofield>
+		</field>
+		<field>
+			<displayname>生成TLS密钥</displayname>
+			<name>generatetlskey</name>
+			<disablefields>tlssharedkey</disablefields>
+			<value>on</value>
+			<type>checkbox</type>
+			<description>自动生成共享的TLS认证密钥。</description>
+			<bindstofield>ovpnserver->step10->gentlskey</bindstofield>
+		</field>
+		<field>
+			<displayname>TLS共享密钥</displayname>
+			<name>tlssharedkey</name>
+			<description>粘贴到共享TLS密钥（如果已生成）。</description>
+			<type>textarea</type>
+			<cols>30</cols>
+			<rows>5</rows>
+			<bindstofield>ovpnserver->step10->tlskey</bindstofield>
+		</field>
+		<field>
+			<displayname>DH参数长度</displayname>
+			<name>dhparameters</name>
+			<type>select</type>
+			<value>2048</value>
+			<bindstofield>ovpnserver->step10->dhkey</bindstofield>
+			<options>
+				<option>
+					<name>1024 bit</name>
+					<value>1024</value>
+				</option>
+				<option>
+					<name>2048 bit</name>
+					<value>2048</value>
+				</option>
+				<option>
+					<name>4096 bit</name>
+					<value>4096</value>
+				</option>
+			</options>
+			<description>&lt;br/&gt;Diffie-Hellman（DH）密钥交换参数的长度，用于建立安全通信信道。 与其他这样的设置一样，较大的值更安全，但在操作上可能较慢。</description>
+		</field>
+		<field>
+			<name>crypto</name>
+			<type>select</type>
+			<displayname>加密算法</displayname>
+			<bindstofield>ovpnserver->step10->crypto</bindstofield>
+			<value>AES-256-CBC</value>
+			<options>
+				<option>
+					<name>dummy</name>
+					<value>dummy</value>
+				</option>
+			</options>
+			<description>&lt;br/&gt;用于加密端点之间的流量的算法。 此设置必须在客户端和服务器端匹配，但是如果需要，则另外设置。 某些算法将在不同的硬件上执行得更好，这取决于支持的VPN加速器芯片的可用性。</description>
+		</field>
+		<field>
+			<name>digest</name>
+			<type>select</type>
+			<displayname>认证摘要算法</displayname>
+			<bindstofield>ovpnserver->step10->digest</bindstofield>
+			<options>
+				<option>
+					<name>dummy</name>
+					<value>dummy</value>
+				</option>
+			</options>
+			<value>SHA1</value>
+			<description>&lt;br/&gt;用于验证端点之间的流量的方法。 此设置必须在客户端和服务器端匹配，但是如果需要，则另外设置。</description>
+		</field>
+		<field>
+			<name>engine</name>
+			<type>select</type>
+			<displayname>硬件加密</displayname>
+			<bindstofield>ovpnserver->step10->engine</bindstofield>
+			<options>
+				<option>
+					<name>dummy</name>
+					<value>dummy</value>
+				</option>
+			</options>
+			<description>&lt;br/&gt;用于此VPN连接的硬件加密加速器（如果有）。</description>
+		</field>
+		<field>
+			<type>listtopic</type>
+			<name>Tunnel Settings</name>
+		</field>
+		<field>
+			<displayname>隧道网络</displayname>
+			<name>tunnelnet</name>
+			<type>input</type>
+			<size>20</size>
+			<bindstofield>ovpnserver->step10->tunnelnet</bindstofield>
+			<description>这是用于此服务器和客户端主机之间的私人通信的虚拟网络，使用CIDR表示法表示（例如10.0.8.0/24）。 第一个网络地址将被分配给服务器虚拟接口。 其余的网络地址可以可选地分配给连接的客户端。 （见地址池）</description>
+		</field>
+		<field>
+			<displayname>重定向网关</displayname>
+			<name>redirectgw</name>
+			<type>checkbox</type>
+			<description>Force all client generated traffic through the tunnel.</description>
+			<bindstofield>ovpnserver->step10->rdrgw</bindstofield>
+		</field>
+		<field>
+			<displayname>本地网络</displayname>
+			<name>localnet</name>
+			<type>input</type>
+			<size>20</size>
+			<bindstofield>ovpnserver->step10->localnet</bindstofield>
+			<description>这是可以从远程端点访问的网络，表示为CIDR范围。 若未在远程计算机上通过此隧道将路由添加到本地网络，则可以将其留空。 通常设置为LAN网络。</description>
+		</field>
+		<field>
+			<displayname>并发连接数</displayname>
+			<name>concurrentcon</name>
+			<description>Specify the maximum number of clients allowed to concurrently connect to this server.</description>
+			<type>input</type>
+			<size>10</size>
+			<bindstofield>ovpnserver->step10->concurrentcon</bindstofield>
+		</field>
+		<field>
+			<displayname>压缩</displayname>
+			<name>compression</name>
+			<description>&lt;br/&gt;使用LZO算法压缩隧道报文。 如果OpenVPN检测到数据包中的数据未被有效压缩，自适应压缩将动态禁用压缩一段时间。</description>
+			<bindstofield>ovpnserver->step10->compression</bindstofield>
+			<type>select</type>
+			<options>
+				<option>
+					<name>dummy</name>
+					<value>dummy</value>
+				</option>
+			</options>
+		</field>
+		<field>
+			<displayname>Type-of-Service</displayname>
+			<name>tos</name>
+			<type>checkbox</type>
+			<description>设置隧道报文的TOS IP头值与封装报文的TOS值相匹配。</description>
+			<bindstofield>ovpnserver->step10->tos</bindstofield>
+		</field>
+		<field>
+			<displayname>客户端间通信</displayname>
+			<name>interclient</name>
+			<type>checkbox</type>
+			<description>允许连接到此服务器的客户端之间的通信。</description>
+			<bindstofield>ovpnserver->step10->interclient</bindstofield>
+		</field>
+		<field>
+			<displayname>重复连接</displayname>
+			<name>duplicate_cn</name>
+			<type>checkbox</type>
+			<description>允许来自使用相同通用名称的客户端的多个并发连接。&lt;br/&gt;注意：这通常不推荐，但在某些情况下可能需要。</description>
+			<bindstofield>ovpnserver->step10->duplicate_cn</bindstofield>
+		</field>
+		<field>
+			<type>listtopic</type>
+			<name>Client Settings</name>
+		</field>
+		<field>
+			<displayname>Dynamic IP</displayname>
+			<name>dynip</name>
+			<type>checkbox</type>
+			<value>on</value>
+			<description>Allow connected clients to retain their connections if their IP address changes.</description>
+			<bindstofield>ovpnserver->step10->dynip</bindstofield>
+		</field>
+		<field>
+			<displayname>添加地址池</displayname>
+			<name>addrpool</name>
+			<type>checkbox</type>
+			<value>on</value>
+			<description>为客户端提供虚拟适配器IP地址（请参阅隧道网络）。</description>
+			<bindstofield>ovpnserver->step10->addrpool</bindstofield>
+		</field>
+		<field>
+			<displayname>Topology</displayname>
+			<name>topology</name>
+			<type>select</type>
+			<value>subnet</value>
+			<bindstofield>ovpnserver->step10->topology</bindstofield>
+			<options>
+				<option>
+					<name>Subnet -- One IP address per client in a common subnet</name>
+					<value>subnet</value>
+				</option>
+				<option>
+					<name>net30 -- Isolated /30 network per client</name>
+					<value>net30</value>
+				</option>
+			</options>
+			<description>指定在IPv4上使用tun模式时，用于向客户端提供虚拟适配器IP地址的方法。&lt;br /&gt;某些客户端可能要求将其设置为“子网”，即使对于IPv6，例如OpenVPN Connect（iOS / Android）。&lt;br /&gt;旧版本的OpenVPN（2.0.9之前）或诸如Yealink电话的客户端可能需要&quot;net30&quot;。</description>
+		</field>
+		<field>
+			<displayname>DNS Default Domain</displayname>
+			<name>defaultdomain</name>
+			<type>input</type>
+			<description>为客户端提供默认域名。</description>
+			<bindstofield>ovpnserver->step10->defaultdomain</bindstofield>
+		</field>
+		<field>
+			<displayname>DNS Server 1</displayname>
+			<name>dnsserver1</name>
+			<type>input</type>
+			<bindstofield>ovpnserver->step10->dns1</bindstofield>
+			<description>DNS服务器IP地址提供给连接客户端。</description>
+		</field>
+		<field>
+			<displayname>DNS Server 2</displayname>
+			<name>dnserver2</name>
+			<type>input</type>
+			<bindstofield>ovpnserver->step10->dns2</bindstofield>
+			<description>DNS服务器IP地址提供给连接客户端。</description>
+		</field>
+		<field>
+			<displayname>DNS Server 3</displayname>
+			<name>dnserver3</name>
+			<type>input</type>
+			<bindstofield>ovpnserver->step10->dns3</bindstofield>
+			<description>DNS服务器IP地址提供给连接客户端。</description>
+		</field>
+		<field>
+			<displayname>DNS Server 4</displayname>
+			<name>dnserver4</name>
+			<type>input</type>
+			<bindstofield>ovpnserver->step10->dns4</bindstofield>
+			<description>DNS服务器IP地址提供给连接客户端。</description>
+		</field>
+		<field>
+			<displayname>NTP 服务器</displayname>
+			<name>ntpserver1</name>
+			<type>input</type>
+			<bindstofield>ovpnserver->step10->ntp1</bindstofield>
+			<description>网络时间协议服务器提供给连接客户端。</description>
+		</field>
+		<field>
+			<displayname>NTP Server 2</displayname>
+			<name>ntpserver2</name>
+			<type>input</type>
+			<bindstofield>ovpnserver->step10->ntp2</bindstofield>
+			<description>网络时间协议服务器提供给连接客户端。</description>
+		</field>
+		<field>
+			<name>nbtenable</name>
+			<type>checkbox</type>
+			<displayname>NetBIOS Options</displayname>
+			<bindstofield>ovpnserver->step10->nbtenable</bindstofield>
+			<description>通过TCP / IP启用NetBIOS。 &lt;br/&gt;如果未设置此选项，则将禁用所有NetBIOS over TCP / IP选项（包括WINS）。</description>
+		</field>
+		<field>
+			<displayname>NetBIOS节点类型</displayname>
+			<name>nbttype</name>
+			<type>select</type>
+			<bindstofield>ovpnserver->step10->nbttype</bindstofield>
+			<options>
+				<option>
+					<name>dummy</name>
+					<value>dummy</value>
+				</option>
+			</options>
+			<description>&lt;br/&gt;可能的选项：b节点（广播），p节点（到WINS服务器的点对点名称查询），m节点（广播然后查询名称服务器）和h节点（查询名称服务器，然后广播） 。</description>
+		</field>
+		<field>
+			<displayname>NetBIOS范围ID</displayname>
+			<name>nbtscope</name>
+			<type>input</type>
+			<bindstofield>ovpnserver->step10->nbtscope</bindstofield>
+			<description>NetBIOS范围ID通过TCP / IP为NetBIOS提供扩展的命名服务。 NetBIOS范围ID将单个网络上的NetBIOS流量仅隔离到具有相同NetBIOS范围ID的那些节点。</description>
+		</field>
+		<field>
+			<displayname>WINS Server 1</displayname>
+			<name>winsserver1</name>
+			<type>input</type>
+			<bindstofield>ovpnserver->step10->wins1</bindstofield>
+			<description>用于提供给连接客户端的Windows Internet名称服务（WINS）服务器IP。 在大多数所有现代网络中不可取。</description>
+		</field>
+		<field>
+			<displayname>WINS Server 2</displayname>
+			<name>winsserver2</name>
+			<type>input</type>
+			<bindstofield>ovpnserver->step10->wins2</bindstofield>
+			<description>用于提供给连接客户端的Windows Internet名称服务（WINS）服务器IP。 在大多数所有现代网络中不可取。</description>
+		</field>
+		<field>
+			<name>Advanced</name>
+			<type>textarea</type>
+			<cols>30</cols>
+			<rows>5</rows>
+			<description>在此处输入要添加到OpenVPN服务器配置的任何其他选项，以分号分隔。 示例：push“route 10.0.0.0 255.255.255.0”</description>
+			<bindstofield>ovpnserver->step10->advanced</bindstofield>
+		</field>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+	<stepbeforeformdisplay>step10_stepbeforeformdisplay();</stepbeforeformdisplay>
+	<stepsubmitphpaction>step10_submitphpaction();</stepsubmitphpaction>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+<step>
+	<id>11</id>
+	<title>防火墙规则配置</title>
+	<description>OpenVPN远程访问服务器设置向导</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<type>listtopic</type>
+			<name>防火墙规则配置</name>
+		</field>
+		<field>
+			<type>text</type>
+			<description>防火墙规则控制允许什么网络流量。 必须添加规则以允许流量到OpenVPN服务器的IP和端口，以及允许来自连接的客户端的流量通过隧道。 这些规则可以在此处自动添加，也可以在完成向导后手动配置。</description>
+		</field>
+		<field>
+			<type>listtopic</type>
+			<name>从客户端到服务器的流量</name>
+		</field>
+		<field>
+			<name>ovpnrule</name>
+			<displayname>防火墙规则</displayname>
+			<description>添加规则以允许从Internet上的任何位置的客户端连接到此OpenVPN服务器进程。</description>
+			<type>checkbox</type>
+			<bindstofield>ovpnserver->step11->ovpnrule</bindstofield>
+		</field>
+		<field>
+			<type>listtopic</type>
+			<name>通过VPN从客户端流量</name>
+		</field>
+		<field>
+			<name>ovpnallow</name>
+			<displayname>OpenVPN 规则</displayname>
+			<description>添加规则以允许来自连接的客户端的所有流量在VPN隧道内传递。</description>
+			<type>checkbox</type>
+			<bindstofield>ovpnserver->step11->ovpnallow</bindstofield>
+		</field>
+		<field>
+			<name>下一步</name>
+			<type>submit</type>
+		</field>
+	</fields>
+</step>
+<step>
+	<id>12</id>
+	<title>完成!</title>
+	<description>OpenVPN远程访问服务器设置向导</description>
+	<disableheader>true</disableheader>
+	<fields>
+		<field>
+			<type>listtopic</type>
+			<name>配置完成！</name>
+		</field>
+		<field>
+			<type>text</type>
+			<description>配置现已完成。</description>
+		</field>
+		<field>
+			<type>text</type>
+			<description>如果要导出客户端配置，请导航到系统-> 插件管理，安装OpenVPN Client Export软件包。</description>
+		</field>
+		<field>
+			<type>submit</type>
+			<name>完成</name>
+		</field>
+	</fields>
+	<stepsubmitphpaction>step12_submitphpaction();</stepsubmitphpaction>
+	<includefile>/usr/local/www/wizards/openvpn_wizard.inc</includefile>
+</step>
+</pfsensewizard>
