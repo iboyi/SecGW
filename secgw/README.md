@@ -1,3 +1,3 @@
-开源安全网关系列
+开源安全网关系列-web ui
 
-更新路径：/usr/local/
+路径：/usr/local/
